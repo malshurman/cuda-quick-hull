@@ -1,12 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\points_generation\points_generator.cpp" />
+    <Filter Include="points_generation">
+      <UniqueIdentifier>{a22e5e4c-567b-47d3-8569-50304c29c44d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="quickhull">
+      <UniqueIdentifier>{1ed6108d-1f6d-44ae-9e38-4de226e7ccc6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\points_generation\random_points.h" />
+    <ClCompile Include="src\points_generation\points_generator.cpp">
+      <Filter>points_generation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\quickhull\cuda_quickhull.cu" />
+    <ClInclude Include="src\points_generation\random_points.h">
+      <Filter>points_generation</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="src\quickhull\cuda_quickhull.cu">
+      <Filter>quickhull</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>
