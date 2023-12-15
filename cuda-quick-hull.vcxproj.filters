@@ -7,15 +7,27 @@
     <Filter Include="quickhull">
       <UniqueIdentifier>{1ed6108d-1f6d-44ae-9e38-4de226e7ccc6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{e83dd69d-f961-454a-a1cd-0486561ccfc5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\points_generation\points_generator.cpp">
       <Filter>points_generation</Filter>
     </ClCompile>
+    <ClCompile Include="src\test\TEST.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\points_generation\random_points.h">
       <Filter>points_generation</Filter>
+    </ClInclude>
+    <ClInclude Include="src\quickhull\quickhull.h">
+      <Filter>quickhull</Filter>
+    </ClInclude>
+    <ClInclude Include="src\test\catch.hpp">
+      <Filter>tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
