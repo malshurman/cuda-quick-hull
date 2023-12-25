@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+#include "quickhull.h"
 
 using namespace std;
 
@@ -111,7 +112,7 @@ void quickHullCUDA(Point* points, int numPoints, int* hullPoints, int* numHullPo
 	cudaFree(d_numHullPoints);
 }
 
-int main() {
+/*int main() {
 	Point* points = (Point*)malloc(N * sizeof(Point));
 	int* hullPoints = (int*)malloc(N * sizeof(int));
 	int numHullPoints = 0;
@@ -157,4 +158,4 @@ int main() {
 	free(hullPoints);
 
 	return 0;
-}
+}*/
