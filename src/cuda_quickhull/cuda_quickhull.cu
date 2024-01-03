@@ -56,6 +56,43 @@ public:
     }
 };
 
+struct GeometryUtils {
+    __host__ __device__
+    static int orientation(const cqh::Point& p, const cqh::Point& q, const cqh::Point& r) {
+        int val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+
+
+        if (val == 0) return 0;  // colinear
+        return (val > 0) ? 1 : 2; // clock or counterclock wise
+    }
+
+
+    __host__ __device__
+    static float distanceSq(const cqh::Point& p1, const cqh::Point& p2) {
+        return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+    }
+};
+
+
+struct PolarOrderComparator {
+    cqh::Point leftmostPoint;
+
+
+    __host__ __device__
+    PolarOrderComparator(const cqh::Point& leftmostPoint) : leftmostPoint(leftmostPoint) {}
+
+
+    __host__ __device__
+    bool operator()(const cqh::Point& p1, const cqh::Point& p2) const {
+        int order = GeometryUtils::orientation(leftmostPoint, p1, p2);
+        if (order == 0) {
+            return GeometryUtils::distanceSq(leftmostPoint, p1) < GeometryUtils::distanceSq(leftmostPoint, p2);
+        }
+        return (order == 2);
+    }
+};
+
+
 __host__
 void quickHull(const thrust::device_vector<cqh::Point>& v, const cqh::Point& a, const cqh::Point& b, thrust::device_vector<cqh::Point>& hull) {
     if (v.empty()) {
@@ -93,4 +130,10 @@ void quickHull(const thrust::device_vector<cqh::Point>& input, thrust::device_ve
 
 void cqh::computeConvexHull(const thrust::device_vector<cqh::Point>& input, thrust::device_vector<cqh::Point>& output) {
     quickHull(input, output);
+
+    // Find the leftmost point
+    Point leftmostPoint = *thrust::min_element(output.begin(), output.end(), PointComparatorByX());
+
+    // Sort the points in counterclockwise order
+    thrust::sort(thrust::device, output.begin(), output.end(), PolarOrderComparator(leftmostPoint));
 }

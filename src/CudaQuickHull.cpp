@@ -7,7 +7,7 @@
 #include "visualization/points_visualization.h"
 
 int main() {
-	const int N = 500;
+	const int N = 20000;
 	// create a vector of points in the plane with thrust
 	thrust::host_vector<cqh::Point> h_points = generatePoints(N, 100, 900);
 	std::cout << N << " points randomly generated!" << std::endl;
@@ -42,15 +42,6 @@ int main() {
 
 	std::cout << "Execution time: " << duration << " ms" << std::endl;
 
-	std::vector<cqh::Point> cvHull;
-	std::vector<cqh::Point> cvPoints;
-	for (size_t i = 0; i < h_points.size(); i++) {
-		cqh::Point point;
-		point.x = h_points[i].x;
-		point.y = h_points[i].y;
-		cvPoints.push_back(point);
-	}
-	//cv::convexHull(cvPoints, cvHull);
 
 	drawPointsAndLines(h_points, h_out);
 
