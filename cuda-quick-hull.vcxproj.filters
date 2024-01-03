@@ -7,32 +7,30 @@
     <Filter Include="quickhull">
       <UniqueIdentifier>{1ed6108d-1f6d-44ae-9e38-4de226e7ccc6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="tests">
-      <UniqueIdentifier>{e83dd69d-f961-454a-a1cd-0486561ccfc5}</UniqueIdentifier>
+    <Filter Include="test">
+      <UniqueIdentifier>{66cfe9de-79bf-4ba1-a562-da82eb9be7e2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\points_generation\points_generator.cpp">
+    <ClCompile Include="src\points_generation\points_generation.cpp">
       <Filter>points_generation</Filter>
     </ClCompile>
-    <ClCompile Include="src\test\TEST.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
+    <ClCompile Include="src\visualization\points_visualization.cpp" />
+    <ClCompile Include="src\CudaQuickHull.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\points_generation\random_points.h">
+    <ClInclude Include="src\points_generation\points_generation.h">
       <Filter>points_generation</Filter>
     </ClInclude>
-    <ClInclude Include="src\quickhull\quickhull.h">
-      <Filter>quickhull</Filter>
-    </ClInclude>
-    <ClInclude Include="src\test\catch.hpp">
-      <Filter>tests</Filter>
-    </ClInclude>
+    <ClInclude Include="src\cuda_quickhull\cuda_quickhull.cuh" />
+    <ClInclude Include="src\visualization\points_visualization.h" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\quickhull\cuda_quickhull.cu">
+    <CudaCompile Include="src\cuda_quickhull\cuda_quickhull.cu">
       <Filter>quickhull</Filter>
     </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>
