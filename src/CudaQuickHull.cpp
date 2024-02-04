@@ -84,7 +84,7 @@ void drawConvexHullForRandomPoints(int numPoints) {
 }
 
 int compareSequentialAndParallelConvexHull() {
-	const std::vector<long long> numPointsList = { 10000, 50000, 100000, 1000000, 5000000, 10000000 };
+	const std::vector<long long> numPointsList = { 10000, 20000, 40000, 50000, 100000, 500000, 1000000, 5000000, 10000000, 50000000, 100000000 };
 	std::map<int, std::pair<double, double>> results;
 
 	for (const auto& numPoints : numPointsList) {
@@ -115,7 +115,7 @@ int compareSequentialAndParallelConvexHull() {
 			}
 
 			auto startCV = std::chrono::high_resolution_clock::now();
-			cv::convexHull(cvPoints, cvHull);
+			//cv::convexHull(cvPoints, cvHull);
 			auto endCV = std::chrono::high_resolution_clock::now();
 
 			auto durationCV = std::chrono::duration_cast<std::chrono::milliseconds>(endCV - startCV).count();

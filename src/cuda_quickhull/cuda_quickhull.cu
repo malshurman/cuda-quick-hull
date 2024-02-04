@@ -125,23 +125,12 @@ void quickHullStart(const thrust::device_vector<cqh::Point>& input, thrust::devi
     cqh::Point pointWithMinX = *thrust::min_element(input.begin(), input.end(), PointComparatorByX());
     cqh::Point pointWithMaxX = *thrust::max_element(input.begin(), input.end(), PointComparatorByX());
 
-    thrust::device_vector<cqh::Point> aboveLine(input.size());
-    thrust::device_vector<cqh::Point> belowLine(input.size());
-
     // Split all points into those above and below the line made by connecting leftmost and rightmost point
-    auto partitionPoint = thrust::partition_copy(
-        thrust::device,
-        input.begin(),
-        input.end(),
-        aboveLine.begin(),
-        belowLine.begin(),
-        isAboveLine(pointWithMinX, pointWithMaxX)
-    );
-
-    size_t aboveSize = partitionPoint.first - aboveLine.begin();
-    size_t belowSize = partitionPoint.second - belowLine.begin();
-
+    thrust::device_vector<cqh::Point> aboveLine(input.size());
+    size_t aboveSize = thrust::copy_if(thrust::device, input.begin(), input.end(), aboveLine.begin(), isAboveLine(pointWithMinX, pointWithMaxX)) - aboveLine.begin();
     aboveLine.resize(aboveSize);
+    thrust::device_vector<cqh::Point> belowLine(input.size());
+    size_t belowSize = thrust::copy_if(thrust::device, input.begin(), input.end(), belowLine.begin(), isAboveLine(pointWithMaxX, pointWithMinX)) - belowLine.begin();
     belowLine.resize(belowSize);
 
     // The leftmost and rightmost points are definitely in the convex hull, now we recursively find the rest
@@ -151,7 +140,6 @@ void quickHullStart(const thrust::device_vector<cqh::Point>& input, thrust::devi
     output.push_back(pointWithMaxX);
     quickHullIterative(belowLine, pointWithMaxX, pointWithMinX, output);
 }
-
 
 void cqh::computeConvexHull(const thrust::device_vector<cqh::Point>& input, thrust::device_vector<cqh::Point>& output) {
     quickHullStart(input, output);
