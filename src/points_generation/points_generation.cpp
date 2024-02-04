@@ -40,6 +40,7 @@ std::vector<cqh::Point> generateSquarePoints(std::mt19937& rng, std::uniform_rea
     return points;
 }
 
+// ONLY SQUARE WORKS
 std::vector<cqh::Point> generatePoints(int seed, int numPoints, int numOutliers, float minCoordinate, float maxCoordinate, int outlierRangeOffset, Shape shape) {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<double> dist(minCoordinate, maxCoordinate);

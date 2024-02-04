@@ -16,6 +16,7 @@
 #include <thrust/copy.h>
 #include <thrust/execution_policy.h>
 #include <thrust/sort.h>
+#include <thrust/partition.h>
 
 struct PointComparatorByX {
     __device__
@@ -94,42 +95,66 @@ struct PolarOrderComparator {
 
 
 __host__
-void quickHull(const thrust::device_vector<cqh::Point>& v, const cqh::Point& a, const cqh::Point& b, thrust::device_vector<cqh::Point>& hull) {
+void quickHullIterative(const thrust::device_vector<cqh::Point>& v, const cqh::Point& a, const cqh::Point& b, thrust::device_vector<cqh::Point>& hull) {
+    // The algorithm finishes when there are no more points left to consider
     if (v.empty()) {
         return;
     }
 
+    // We find the point furthest away from the line a-b. This forms a triangle, we only consider points that are outside the triangle.
     cqh::Point f = *thrust::max_element(v.begin(), v.end(), DistanceFromLine(a, b));
 
+    // We only look at points outside of the triangle, which corresponds to being above the lines a-f and f-b
     thrust::device_vector<cqh::Point> aboveAFsegment(v.size());
     size_t aboveAFSize = thrust::copy_if(thrust::device, v.begin(), v.end(), aboveAFsegment.begin(), isAboveLine(a, f)) - aboveAFsegment.begin();
     aboveAFsegment.resize(aboveAFSize);
     thrust::device_vector<cqh::Point> aboveFBsegment(v.size());
     size_t aboveFBSize = thrust::copy_if(thrust::device, v.begin(), v.end(), aboveFBsegment.begin(), isAboveLine(f, b)) - aboveFBsegment.begin();
     aboveFBsegment.resize(aboveFBSize);
+
+    // Again, we add the point that is in the convex hull and continue searching for points recursively
     hull.push_back(f);
-    quickHull(aboveAFsegment, a, f, hull);
-    quickHull(aboveFBsegment, f, b, hull);
+
+    quickHullIterative(aboveAFsegment, a, f, hull);
+    quickHullIterative(aboveFBsegment, f, b, hull);
 }
 
 __host__
-void quickHull(const thrust::device_vector<cqh::Point>& input, thrust::device_vector<cqh::Point>& output) {
+void quickHullStart(const thrust::device_vector<cqh::Point>& input, thrust::device_vector<cqh::Point>& output) {
+    // Get leftmost and rightmost point
     cqh::Point pointWithMinX = *thrust::min_element(input.begin(), input.end(), PointComparatorByX());
     cqh::Point pointWithMaxX = *thrust::max_element(input.begin(), input.end(), PointComparatorByX());
+
     thrust::device_vector<cqh::Point> aboveLine(input.size());
-    size_t aboveSize = thrust::copy_if(thrust::device, input.begin(), input.end(), aboveLine.begin(), isAboveLine(pointWithMinX, pointWithMaxX)) - aboveLine.begin();
-    aboveLine.resize(aboveSize);
     thrust::device_vector<cqh::Point> belowLine(input.size());
-    size_t belowSize = thrust::copy_if(thrust::device, input.begin(), input.end(), belowLine.begin(), isAboveLine(pointWithMaxX, pointWithMinX)) - belowLine.begin();
+
+    // Split all points into those above and below the line made by connecting leftmost and rightmost point
+    auto partitionPoint = thrust::partition_copy(
+        thrust::device,
+        input.begin(),
+        input.end(),
+        aboveLine.begin(),
+        belowLine.begin(),
+        isAboveLine(pointWithMinX, pointWithMaxX)
+    );
+
+    size_t aboveSize = partitionPoint.first - aboveLine.begin();
+    size_t belowSize = partitionPoint.second - belowLine.begin();
+
+    aboveLine.resize(aboveSize);
     belowLine.resize(belowSize);
+
+    // The leftmost and rightmost points are definitely in the convex hull, now we recursively find the rest
     output.push_back(pointWithMinX);
-    quickHull(aboveLine, pointWithMinX, pointWithMaxX, output);
+    quickHullIterative(aboveLine, pointWithMinX, pointWithMaxX, output);
+
     output.push_back(pointWithMaxX);
-    quickHull(belowLine, pointWithMaxX, pointWithMinX, output);
+    quickHullIterative(belowLine, pointWithMaxX, pointWithMinX, output);
 }
 
+
 void cqh::computeConvexHull(const thrust::device_vector<cqh::Point>& input, thrust::device_vector<cqh::Point>& output) {
-    quickHull(input, output);
+    quickHullStart(input, output);
 
     // Find the leftmost point
     Point leftmostPoint = *thrust::min_element(output.begin(), output.end(), PointComparatorByX());

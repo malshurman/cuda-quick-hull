@@ -10,11 +10,12 @@
 #include "points_generation/points_generation.h"
 #include "visualization/points_visualization.h"
 
-int main() {
-	/*
-	// Open the CSV file
-	std::string fullPathToFile("src/resources/horseshoe.csv");
-	std::cout << "Attempting to open file at: " << fullPathToFile << std::endl;
+int drawConvexHullForCSV(thrust::host_vector<cqh::Point>& h_points, const std::string& fileName) {
+	std::cout << "Attempting to open file at: " << fileName << std::endl;
+
+	// Append directory path and file extension to the filename
+	std::string fullPathToFile = "src/resources/" + fileName + ".csv";
+
 	std::ifstream file(fullPathToFile);
 
 	// Check if the file is open
@@ -26,9 +27,6 @@ int main() {
 	// Skip the first line (header)
 	std::string line;
 	std::getline(file, line);
-
-	// Create a vector of points
-	thrust::host_vector<cqh::Point> h_points;
 
 	// Read the points from the CSV file
 	while (std::getline(file, line)) {
@@ -47,19 +45,56 @@ int main() {
 	}
 
 	std::cout << h_points.size() << " points read from CSV file!" << std::endl;
-
 	int numPoints = h_points.size();
-	*/
-	const std::vector<int> numPointsList = { 50000000, 100000000 };
+	thrust::device_vector<cqh::Point> d_points = h_points;
+	thrust::device_vector<cqh::Point> hull;
+
+	std::cout << "Starting..." << std::endl;
+
+	auto startCQH = std::chrono::high_resolution_clock::now();
+	cqh::computeConvexHull(d_points, hull);
+	auto endCQH = std::chrono::high_resolution_clock::now();
+
+	auto durationCQH = std::chrono::duration_cast<std::chrono::milliseconds>(endCQH - startCQH).count();
+	std::cout << "cqh::computeConvexHull execution time: " << durationCQH << " ms" << std::endl;
+
+	drawPointsAndLines(h_points, hull);
+}
+
+void drawConvexHullForRandomPoints(int numPoints) {
+	const int numPointsReduced = numPoints * 0.99;
+	const int numOutliers = numPoints * 0.01;
+	const int minRange = 200;
+	const int maxRange = 800;
+	const int outlierOffset = 100;
+	thrust::host_vector<cqh::Point> h_points = generatePoints(rand(), numPointsReduced, numOutliers, minRange, maxRange, outlierOffset, SQUARE);
+	std::cout << numPointsReduced << " points and " << numOutliers << " outliers randomly generated!" << std::endl;
+
+	thrust::device_vector<cqh::Point> d_points = h_points;
+	thrust::device_vector<cqh::Point> hull;
+
+	auto startCQH = std::chrono::high_resolution_clock::now();
+	cqh::computeConvexHull(d_points, hull);
+	auto endCQH = std::chrono::high_resolution_clock::now();
+
+	auto durationCQH = std::chrono::duration_cast<std::chrono::milliseconds>(endCQH - startCQH).count();
+	std::cout << "cqh::computeConvexHull execution time: " << durationCQH << " ms" << std::endl;
+
+	drawPointsAndLines(h_points, hull);
+}
+
+int compareSequentialAndParallelConvexHull() {
+	const std::vector<long long> numPointsList = { 10000, 50000, 100000, 1000000, 5000000, 10000000 };
 	std::map<int, std::pair<double, double>> results;
 
 	for (const auto& numPoints : numPointsList) {
-		const int numOutliers = 20;
+		const int numPointsReduced = numPoints * 0.9;
+		const int numOutliers = numPoints * 0.1;
 		const int minRange = 200;
 		const int maxRange = 800;
 		const int outlierOffset = 100;
 		// create a vector of points in the plane with thrust
-		thrust::host_vector<cqh::Point> h_points = generatePoints(rand(), numPoints, numOutliers, minRange, maxRange, outlierOffset, SQUARE);
+		thrust::host_vector<cqh::Point> h_points = generatePoints(rand(), numPointsReduced, numOutliers, minRange, maxRange, outlierOffset, SQUARE);
 		std::cout << numPoints << " points randomly generated!" << std::endl;
 
 		std::cout << "Starting..." << std::endl;
@@ -111,45 +146,42 @@ int main() {
 		std::cout << "| " << std::setw(16) << result.first << " | " << std::setw(32) << result.second.first << " | " << std::setw(40) << result.second.second << " |" << std::endl;
 	}
 
-	/*
-	// Verify
-	std::vector<cv::Point> cvPoints;
-	std::vector<cv::Point> cvHull;
-	for (const auto& point : h_points) {
-		cvPoints.push_back(cv::Point(point.x, point.y));
-	}
-	cv::convexHull(cvPoints, cvHull);
+	return 0;
+}
 
-	thrust::device_vector<cqh::Point> d_points = h_points;
-	thrust::device_vector<cqh::Point> hull;
-	cqh::computeConvexHull(d_points, hull);
-	thrust::host_vector<cqh::Point> h_out = hull;
-	*/
+int main() {
+	int choice;
+	std::cout << "Please choose an option:\n";
+	std::cout << "1. Calculate convex hull for points read from a CSV file\n";
+	std::cout << "2. Calculate convex hull for random points\n";
+	std::cout << "3. Run a predetermined test to compare GPU and CPU convex hull\n";
+	std::cin >> choice;
 
-	/*
-	for (size_t i = 0; i < cvHull.size(); i++) {
-		std::cout << "(" << cvHull[i].x << "," << cvHull[i].y << "), (" << h_out[i].x << "," << h_out[i].y << ")" << std::endl;
-	}
+	thrust::host_vector<cqh::Point> h_points;
 
-	// Check if both methods return the same output
-	// Compare cvHull and h_out
-	bool isEqual = true;
-	if (cvHull.size() != h_out.size()) {
-		isEqual = false;
+	switch (choice) {
+	case 1: {
+		std::string filename;
+		std::cout << "Enter the name of the CSV file: ";
+		std::cin >> filename;
+		int numPoints = drawConvexHullForCSV(h_points, filename);
+		break;
 	}
-	else {
-		for (size_t i = 0; i < cvHull.size(); i++) {
-			std::cout << "(" << cvHull[i].x << "," << cvHull[i].y << "), (" << h_out[i].x << "," << h_out[i].y << ")" << std::endl;
-			if (cvHull[i].x != h_out[i].x || cvHull[i].y != h_out[i].y) {
-				isEqual = false;
-				break;
-			}
-		}
+	case 2: {
+		int numPoints;
+		std::cout << "Enter the number of random points: ";
+		std::cin >> numPoints;
+		drawConvexHullForRandomPoints(numPoints);
+		break;
 	}
-	std::cout << "Both methods return the same output: " << (isEqual ? "Yes" : "No") << std::endl;
-	*/
-	//drawPointsAndLines(h_points, h_out);
-
+	case 3: {
+		compareSequentialAndParallelConvexHull();
+		break;
+	}
+	default:
+		std::cout << "Invalid option. Please enter 1, 2, or 3.\n";
+		break;
+	}
 
 	return 0;
 }
